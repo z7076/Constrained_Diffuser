@@ -62,7 +62,7 @@ class GaussianDiffusion(nn.Module):
         self.penalty = 2.5e-4
         self.use_equality = False
         
-        algorithm = ['primal_dual', 'projected_gradient', 'augmented_lagrangian', 'conditional']
+        algorithm = ['primal_dual', 'projected_gradient', 'augmented_lagrangian']
         
         self.algorithm = algorithm[4]
         if self.algorithm == 'augmented_lagrangian':
@@ -224,9 +224,6 @@ class GaussianDiffusion(nn.Module):
                 else:
                     posterior_mean = posterior_mean - torch.sum(self.dual_vars.unsqueeze(-1) * grad, dim=0) - self.penalty * torch.sum((vio - self.slack_variables).unsqueeze(-1) * grad , dim=0)
                 self.dual_update_aug(x_t, cbf)
-            elif self.algorithm == 'conditional':
-                grad, vio = self.calc_grad(x_t)
-                posterior_mean = posterior_mean + torch.sum(5.5e-3 * grad, dim=0) * (-1 if self.use_equality else 1)
 
                 
         posterior_variance = extract(self.posterior_variance, t, x_t.shape)
@@ -303,12 +300,7 @@ class GaussianDiffusion(nn.Module):
                 else:
                     posterior_mean = posterior_mean - torch.sum(self.dual_vars.unsqueeze(-1) * grad, dim=0) - self.penalty * torch.sum((vio - self.slack_variables).unsqueeze(-1) * grad , dim=0)
                 self.dual_update_aug(x_t, cbf)
-            elif self.algorithm == 'conditional':
-                grad, vio = self.calc_grad(x_t)
-                if cbf:
-                    posterior_mean = posterior_mean + torch.sum(5e-2 * grad, dim=0) - (1-self.alpha) * torch.sum(5e-2 * grad, dim=0)
-                else:
-                    posterior_mean = posterior_mean + torch.sum(5e-2 * grad, dim=0) * (-1 if self.use_equality else 1)
+
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
 
 
